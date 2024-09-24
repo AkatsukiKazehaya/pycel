@@ -12,6 +12,7 @@ import itertools as it
 import operator
 import re
 import threading
+from decimal import *
 
 import numpy as np
 from openpyxl.formula.tokenizer import Tokenizer
@@ -20,7 +21,6 @@ from openpyxl.utils import (
     quote_sheetname,
     range_boundaries as openpyxl_range_boundaries,
 )
-
 
 ERROR_CODES = frozenset(Tokenizer.ERROR_CODES)
 DIV0 = '#DIV/0!'
@@ -79,6 +79,28 @@ OPERATORS = {
 
 OPERATORS_RE = re.compile('^(?P<oper>(=|<>|<=?|>=?))?(?P<value>.*)$')
 
+
+def mult_without_floating_point_issues(a, b):
+    return float(Decimal(str(a)) * Decimal(str(b)));
+
+
+def add_without_floating_point_issues(a, b):
+    if (type(a) == str or type(b) == str):
+        return a + b;
+
+    return float(Decimal(str(a)) + Decimal(str(b)));
+
+
+def div_without_floating_point_issues(a, b):
+    if (str(a) == 0 or b == 0):
+        return a / b;
+    return float(Decimal(str(a)) / Decimal(str(b)));
+
+
+def sub_without_floating_point_issues(a, b):
+    return float(Decimal(str(a)) - Decimal(str(b)));
+
+
 PYTHON_AST_OPERATORS = {
     'Eq': operator.eq,
     'Lt': operator.lt,
@@ -86,12 +108,12 @@ PYTHON_AST_OPERATORS = {
     'LtE': operator.le,
     'GtE': operator.ge,
     'NotEq': operator.ne,
-    'Add': operator.add,
-    'Sub': operator.sub,
+    'Add': add_without_floating_point_issues,
+    'Sub': sub_without_floating_point_issues,
     'UAdd': operator.pos,
     'USub': operator.neg,
-    'Mult': operator.mul,
-    'Div': operator.truediv,
+    'Mult': mult_without_floating_point_issues,
+    'Div': div_without_floating_point_issues,
     'FloorDiv': operator.floordiv,
     'Mod': operator.mod,
     'Pow': operator.pow,
@@ -104,7 +126,6 @@ PYTHON_AST_OPERATORS = {
 }
 
 COMPARISION_OPS = frozenset(('Eq', 'Lt', 'Gt', 'LtE', 'GtE', 'NotEq'))
-
 
 AddressSize = collections.namedtuple('AddressSize', 'height width')
 
@@ -181,7 +202,7 @@ class AddressMixin:
 
 
 class AddressRange(collections.namedtuple(
-        'Address', 'address sheet start end coordinate'), AddressMixin):
+    'Address', 'address sheet start end coordinate'), AddressMixin):
     """ Helper class for constructing, validating and accessing Range Addresses
 
     **Tuple Attributes:**
@@ -352,7 +373,7 @@ class AddressRange(collections.namedtuple(
 
 
 class AddressCell(collections.namedtuple(
-        'AddressCell', 'address sheet col_idx row coordinate'), AddressMixin):
+    'AddressCell', 'address sheet col_idx row coordinate'), AddressMixin):
     """ Helper class for constructing, validating and accessing Cell Addresses
 
     **Tuple Attributes:**
@@ -473,7 +494,7 @@ class AddressCell(collections.namedtuple(
     @property
     def resolve_range(self):
         """Return nested tuples with an AddressCell for each element"""
-        return (self, ),
+        return (self,),
 
     @classmethod
     def create(cls, address, sheet='', cell=None):
@@ -810,8 +831,8 @@ def r1c1_boundaries(address, cell=None, sheet=None):
 
     min_col, min_row, max_col, max_row = (
         g if g is None else from_relative_to_absolute(g) for g in (
-            m.group(n) for n in ('min_col', 'min_row', 'max_col', 'max_row')
-        )
+        m.group(n) for n in ('min_col', 'min_row', 'max_col', 'max_row')
+    )
     )
 
     items_present = (min_col is not None, min_row is not None,
@@ -883,7 +904,7 @@ class _ArrayFormulaContext:
                 result_size = AddressSize(len(result), len(result[0]))
             else:
                 result_size = AddressSize(1, 1)
-                result = ((result, ), )
+                result = ((result,),)
 
             ctx_size = ctx_address.size
 
@@ -897,7 +918,7 @@ class _ArrayFormulaContext:
 
             # if result is narrower than target, fill w/ NA
             elif result_size.width < ctx_size.width:
-                fill = (NA_ERROR, ) * (ctx_size.width - result_size.width)
+                fill = (NA_ERROR,) * (ctx_size.width - result_size.width)
                 result = tuple(row + fill for row in result)
 
             # if result is one row high and target is taller, then expand rows
@@ -910,7 +931,7 @@ class _ArrayFormulaContext:
 
             # if result is shorter than target, fill w/ NA
             elif result_size.height < ctx_size.height:
-                fill = ((NA_ERROR, ) * ctx_size.width, )
+                fill = ((NA_ERROR,) * ctx_size.width,)
                 result += fill * (ctx_size.height - result_size.height)
 
         return result
@@ -1005,7 +1026,7 @@ def handle_ifs(args, op_range=None):
 
     if op_range is not None:
         if not list_like(op_range):
-            op_range = ((op_range, ), )
+            op_range = ((op_range,),)
 
         size = len(op_range), len(op_range[0])
         for rng in ranges:  # pragma: no branch
@@ -1185,7 +1206,6 @@ class ExcelCmp(collections.namedtuple('ExcelCmp', 'cmp_type value empty')):
 
 
 def build_operator_operand_fixup(capture_error_state):
-
     def array_fixup(left_op, op, right_op):
         """use numpy broadcasting for ranges"""
         # ::TODO:: this needs better error processing to match excel behavior
@@ -1222,6 +1242,7 @@ def build_operator_operand_fixup(capture_error_state):
 
         if op in COMPARISION_OPS:
             if left_op in (None, EMPTY):
+                return False
                 left_op = type_cmp_value(right_op)[1]
 
             if right_op in (None, EMPTY):
@@ -1268,7 +1289,7 @@ def build_operator_operand_fixup(capture_error_state):
             else:
                 return PYTHON_AST_OPERATORS[op](left_op, right_op)
         except ZeroDivisionError:
-            capture_error_state(True, f'Values: {left_op} {op} {right_op}')
+            # capture_error_state(True, f'Values: {left_op} {op} {right_op}')
             return DIV0
         except TypeError:
             capture_error_state(True, f'Values: {left_op} {op} {right_op}')

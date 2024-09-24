@@ -16,11 +16,10 @@ import math
 import os
 import pickle
 from numbers import Number
+from ruamel.yaml import YAML
 
 import networkx as nx
 import numpy as np
-from ruamel.yaml import YAML
-
 from pycel.excelformula import ExcelFormula
 from pycel.excelutil import (
     AddressCell,
@@ -32,6 +31,7 @@ from pycel.excelutil import (
     list_like,
 )
 from pycel.excelwrapper import ExcelOpxWrapper, ExcelOpxWrapperNoData
+from ruamel.yaml import YAML
 
 REF_START = '=_REF_("'
 REF_END = '")'
@@ -126,7 +126,7 @@ class ExcelCompiler:
         to_removes = '_eval excel log graph_todos range_todos ' \
                      'conditional_formats'.split()
         for to_remove in to_removes:
-            if to_remove in state:    # pragma: no branch
+            if to_remove in state:  # pragma: no branch
                 state[to_remove] = None
         return state
 
@@ -303,9 +303,9 @@ class ExcelCompiler:
         filename = filename or self.filename
         extension = self._filename_has_extension(filename)
         if extension:
-            file_types = (extension, )
+            file_types = (extension,)
         elif isinstance(file_types, str):
-            file_types = (file_types, )
+            file_types = (file_types,)
 
         unknown_types = tuple(ft for ft in file_types
                               if ft not in self.save_file_extensions)
@@ -440,7 +440,7 @@ class ExcelCompiler:
 
         if set_as_range and list_like(value) and not (
                 value and list_like(value[0])):
-            value = (value, )
+            value = (value,)
 
         cell_or_range = self.cell_map[address]
 
@@ -1007,7 +1007,6 @@ class ExcelCompiler:
 
 
 class _CellBase:
-
     value = None
 
     def __init__(self, address=None, formula='', excel=None):
@@ -1182,6 +1181,7 @@ class _CycleCell(_Cell):
 
 class _CompiledImporter:
     """Emulate the excel_wrapper for serialized files"""
+
     def __init__(self, filename, file_data):
         # take the workbook filename from the deserialized data if available
         # otherwise the passed in filename

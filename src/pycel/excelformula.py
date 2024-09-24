@@ -18,7 +18,6 @@ import tokenize as tk
 import openpyxl.formula.tokenizer as tokenizer
 from networkx.classes.digraph import DiGraph
 from networkx.exception import NetworkXError
-
 from pycel.excelutil import (
     AddressMultiAreaRange,
     AddressRange,
@@ -33,7 +32,6 @@ from pycel.excelutil import (
 )
 from pycel.lib.function_helpers import load_functions
 from pycel.lib.function_info import func_status_msg
-
 
 ADDR_FUNCS_NAMES = '_R_', '_C_', '_REF_'
 
@@ -93,13 +91,13 @@ class Tokenizer(tokenizer.Tokenizer):
                     tokens.append(token)
 
             elif (
-                prev_token.matches(type_=Token.FUNC, subtype=Token.CLOSE) or
-                prev_token.matches(type_=Token.PAREN, subtype=Token.CLOSE) or
-                prev_token.type == Token.OPERAND
+                    prev_token.matches(type_=Token.FUNC, subtype=Token.CLOSE) or
+                    prev_token.matches(type_=Token.PAREN, subtype=Token.CLOSE) or
+                    prev_token.type == Token.OPERAND
             ) and (
-                next_token.matches(type_=Token.FUNC, subtype=Token.OPEN) or
-                next_token.matches(type_=Token.PAREN, subtype=Token.OPEN) or
-                next_token.type == Token.OPERAND
+                    next_token.matches(type_=Token.FUNC, subtype=Token.OPEN) or
+                    next_token.matches(type_=Token.PAREN, subtype=Token.OPEN) or
+                    next_token.type == Token.OPERAND
             ):
                 # this whitespace is an intersect operator
                 tokens.append(Token(token.value, Token.OP_IN, Token.INTERSECT))
@@ -840,7 +838,7 @@ class ExcelFormula:
         if plugins is None:
             modules = ()
         elif isinstance(plugins, str):
-            modules = (plugins, )
+            modules = (plugins,)
         else:
             modules = tuple(plugins)
         modules = tuple(importlib.import_module(m)
@@ -938,7 +936,7 @@ class ExcelFormula:
                 level = 'warning' if ret_val in ERROR_CODES else 'info'
                 error_logger(level, excel_formula.python_code)
 
-            return ret_val if ret_val not in (None, EMPTY) else 0
+            return ret_val if ret_val not in (None, EMPTY) else None
 
         return eval_func
 

@@ -12,6 +12,7 @@ Python equivalents of various excel functions
 """
 import math
 from decimal import Decimal, ROUND_DOWN, ROUND_HALF_UP, ROUND_UP
+from math import fsum
 
 import numpy as np
 
@@ -313,7 +314,7 @@ def sum_(*args):
         return data
 
     # if no non numeric cells, return zero (is what excel does)
-    return sum(data)
+    return fsum(data)
 
 
 def sumif(rng, criteria, sum_range=None):
