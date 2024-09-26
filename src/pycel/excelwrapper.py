@@ -141,7 +141,6 @@ class _OpxCell(_OpxRange):
         if isinstance(cell_dataonly.value, float):
             # Excel supports a maximum of 13 decimal places.
             cell_dataonly.value = round(cell_dataonly.value, 13)
-            print(cell_dataonly.value)
         return ExcelWrapper.RangeData.__new__(
             cls, address, cls.cell_to_formula(cell), cell_dataonly.value)
 
