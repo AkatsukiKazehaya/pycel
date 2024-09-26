@@ -87,7 +87,6 @@ def mult_without_floating_point_issues(a, b):
 def add_without_floating_point_issues(a, b):
     if (type(a) == str or type(b) == str):
         return a + b;
-
     return float(Decimal(str(a)) + Decimal(str(b)));
 
 

@@ -21,7 +21,6 @@ from unittest import mock
 from openpyxl import load_workbook, Workbook
 from openpyxl.cell.cell import Cell, MergedCell
 from openpyxl.formula.translate import Translator
-
 from pycel.excelutil import AddressCell, AddressRange, flatten, is_address
 
 ARRAY_FORMULA_NAME = '=CSE_INDEX'
@@ -72,6 +71,7 @@ class _OpxRange(ExcelWrapper.RangeData):
     """ Excel range wrapper that distributes reduced api used by compiler
         (Formula & Value)
     """
+
     def __new__(cls, cells, cells_dataonly, address):
         formula = None
         value = cells[0][0].value
@@ -135,8 +135,13 @@ class _OpxCell(_OpxRange):
     """ Excel cell wrapper that distributes reduced api used by compiler
         (Formula & Value)
     """
+
     def __new__(cls, cell, cell_dataonly, address):
         assert isinstance(address, AddressCell)
+        if isinstance(cell_dataonly.value, float):
+            # Excel supports a maximum of 13 decimal places.
+            cell_dataonly.value = round(cell_dataonly.value, 13)
+            print(cell_dataonly.value)
         return ExcelWrapper.RangeData.__new__(
             cls, address, cls.cell_to_formula(cell), cell_dataonly.value)
 
@@ -166,6 +171,7 @@ class ExcelOpxWrapper(ExcelWrapper):
 
     @property
     def defined_names(self):
+
         if self.workbook is not None and self._defined_names is None:
             self._defined_names = {}
 

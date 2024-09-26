@@ -16,7 +16,6 @@ import math
 import os
 import pickle
 from numbers import Number
-from ruamel.yaml import YAML
 
 import networkx as nx
 import numpy as np
@@ -458,7 +457,7 @@ class ExcelCompiler:
     def _reset(self, cell):
         if cell.needs_calc:
             return
-        self.log.info(f"Resetting {cell.address}")
+        # self.log.info(f"Resetting {cell.address}")
         cell.value = None
 
         if cell in self.dep_graph:
@@ -553,7 +552,7 @@ class ExcelCompiler:
                         # trim this cell, now we will need only its value
                         needed_cells.add(child_address)
                         child_cell.formula = None
-                        self.log.debug(f'Trimming {child_address}')
+                        # self.log.debug(f'Trimming {child_address}')
 
         for addr in output_addrs:
             walk_precedents(self.cell_map[addr.address])
@@ -625,7 +624,7 @@ class ExcelCompiler:
                         not cell.address.is_unbounded_range):
                     original_value = cell.value
                     if original_value == str(cell.formula):
-                        self.log.debug(f"No Orig data?: {addr}: {cell.value}")
+                        # self.log.debug(f"No Orig data?: {addr}: {cell.value}")
                         continue
 
                     cell.value = None
@@ -737,7 +736,7 @@ class ExcelCompiler:
                         self._make_cells(addr)
             return added
 
-        self.log.debug(f'_make_cells: {address}')
+        # self.log.debug(f'_make_cells: {address}')
         excel_data = self.excel.get_range(address)
         if address.is_range:
             if excel_data.address != address:
@@ -770,7 +769,7 @@ class ExcelCompiler:
             cell_range = self.cell_map[address]
 
         if cell_range.needs_calc:
-            self.log.debug(f"Evaluating: {cell_range.address}, {cell_range.python_code}")
+            # self.log.debug(f"Evaluating: {cell_range.address}, {cell_range.python_code}")
             if cell_range.address.is_unbounded_range:
                 bounded_addr = str(self.eval(cell_range))
                 bounded_addr_cell = self.cell_map.get(bounded_addr)
@@ -786,7 +785,7 @@ class ExcelCompiler:
             else:
                 # CSE Array Formula
                 data = self.eval(cell_range, cell_range.address)
-            self.log.info(f"Range {cell_range.address} evaluated to '{data}'")
+            # self.log.info(f"Range {cell_range.address} evaluated to '{data}'")
 
             cell_range.value = data
 
@@ -805,7 +804,7 @@ class ExcelCompiler:
                 self._evaluate_range(cell.address.address)
 
             elif cell.python_code:
-                self.log.debug(f"Evaluating: {address}, {cell.python_code}")
+                # self.log.debug(f"Evaluating: {address}, {cell.python_code}")
                 value = self.eval(cell)
                 if is_address(value):
                     # eval produced an address (aka: a reference)
@@ -814,8 +813,8 @@ class ExcelCompiler:
                         self.log.warning(f"Cell {address} evaluated to '{value}',"
                                          f" truncating to '{value.start}'")
                         value = value.start
-                    else:
-                        self.log.info(f"Cell {address} evaluated to address '{value}'")
+                    # else:
+                    # self.log.info(f"Cell {address} evaluated to address '{value}'")
 
                     # fetch the value for this cell, if it exists
                     ref_addr = value.address
@@ -824,9 +823,9 @@ class ExcelCompiler:
                         self._gen_graph(ref_addr)
 
                     value = self.cell_map[ref_addr].value
-                else:
-                    self.log.info(
-                        f"Cell {cell.address} evaluated to '{value}' ({type(value).__name__})")
+                # else:
+                #     self.log.info(
+                #         f"Cell {cell.address} evaluated to '{value}' ({type(value).__name__})")
                 cell.value = (value[0][0] if list_like(value[0]) else value[0]
                               ) if list_like(value) else value
 
@@ -925,7 +924,14 @@ class ExcelCompiler:
 
         if not recursed:
             # if not entered to process one cell / cellrange process other work
-            self._process_gen_graph()
+            try:
+                self._process_gen_graph()
+            except AttributeError:
+                sheetname = self.cell_map.keys()
+                # cellposition = str(self.cell.formula.needed_addresses[0]).split('!')[1]
+                self
+                print(sheetname)
+                return True
 
     def _process_gen_graph(self):
 
@@ -933,7 +939,7 @@ class ExcelCompiler:
             # connect the dependant cells in the graph
             dependant = self.graph_todos.pop()
 
-            self.log.debug(f"Handling {dependant.address}")
+            # self.log.debug(f"Handling {dependant.address}")
 
             for precedent_address in dependant.needed_addresses:
                 if precedent_address.address not in self.cell_map:
@@ -947,11 +953,11 @@ class ExcelCompiler:
             self._evaluate_range(range_todo)
         self.range_todos = []
 
-        self.log.info(
-            f"Graph construction done, {len(self.dep_graph.nodes())} nodes, "
-            f"{len(self.dep_graph.edges())} edges, "
-            f"{len(self.cell_map)} self.cell_map entries"
-        )
+        # self.log.info(
+        #     f"Graph construction done, {len(self.dep_graph.nodes())} nodes, "
+        #     f"{len(self.dep_graph.edges())} edges, "
+        #     f"{len(self.cell_map)} self.cell_map entries"
+        # )
 
     def eval_conditional_formats(self, address):
         """Evaluate the conditional format (formulas) for a cell or cells
