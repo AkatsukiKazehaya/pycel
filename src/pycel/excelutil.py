@@ -87,7 +87,11 @@ def mult_without_floating_point_issues(a, b):
 def add_without_floating_point_issues(a, b):
     if (type(a) == str or type(b) == str):
         return a + b;
-    return float(Decimal(str(a)) + Decimal(str(b)));
+
+    result = Decimal(str(a)) + Decimal(str(b))
+    result = result.quantize(Decimal('1.0000000000000'), rounding=ROUND_HALF_UP)
+    # return float type
+    return float(result)
 
 
 def div_without_floating_point_issues(a, b):
@@ -100,13 +104,27 @@ def sub_without_floating_point_issues(a, b):
     return float(Decimal(str(a)) - Decimal(str(b)));
 
 
+def eq(a, b):
+    # Set the Excel cell to number format with two decimal places.
+    if (isinstance(a.value, float) and isinstance(b.value, float)):
+        return round(a.value, 2) == round(b.value, 2)
+    return a == b
+
+
+def ne(a, b):
+    # Set the Excel cell to number format with two decimal places.
+    if isinstance(a.value, float) and isinstance(b.value, float):
+        return round(a.value, 2) != round(b.value, 2)
+    return a != b
+
+
 PYTHON_AST_OPERATORS = {
-    'Eq': operator.eq,
+    'Eq': eq,
     'Lt': operator.lt,
     'Gt': operator.gt,
     'LtE': operator.le,
     'GtE': operator.ge,
-    'NotEq': operator.ne,
+    'NotEq': ne,
     'Add': add_without_floating_point_issues,
     'Sub': sub_without_floating_point_issues,
     'UAdd': operator.pos,
