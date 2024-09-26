@@ -924,14 +924,8 @@ class ExcelCompiler:
 
         if not recursed:
             # if not entered to process one cell / cellrange process other work
-            try:
-                self._process_gen_graph()
-            except AttributeError:
-                sheetname = self.cell_map.keys()
-                # cellposition = str(self.cell.formula.needed_addresses[0]).split('!')[1]
-                self
-                print(sheetname)
-                return True
+            self._process_gen_graph()
+
 
     def _process_gen_graph(self):
 
