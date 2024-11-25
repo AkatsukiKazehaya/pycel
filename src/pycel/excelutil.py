@@ -1247,6 +1247,10 @@ def build_operator_operand_fixup(capture_error_state):
             String to Number coercion
             String / Number multiplication
         """
+        # 20241125 add 相加后小数不精确，有泄露的情况，直接强制保留小数点后两位
+        left_op = round(left_op, 2)
+        right_op = round(right_op, 2)
+
         left_list, right_list = list_like(left_op), list_like(right_op)
         if not left_list and left_op in ERROR_CODES:
             return left_op
