@@ -87,7 +87,6 @@ def mult_without_floating_point_issues(a, b):
 def add_without_floating_point_issues(a, b):
     if (type(a) == str or type(b) == str):
         return a + b;
-
     result = Decimal(str(a)) + Decimal(str(b))
     result = result.quantize(Decimal('1.0000000000000'), rounding=ROUND_HALF_UP)
     # return float type
@@ -1247,9 +1246,15 @@ def build_operator_operand_fixup(capture_error_state):
             String to Number coercion
             String / Number multiplication
         """
-        # 20241125 add 相加后小数不精确，有泄露的情况，直接强制保留小数点后两位
-        left_op = round(left_op, 2)
-        right_op = round(right_op, 2)
+        # 20241126思路，是大于小于运算符，如果相差小于0.00001统一是相同的
+        if (op in ('Eq', 'Lt', 'Gt', 'LtE', 'GtE', 'NotEq') or op in ('<', '>', '<=', '>=', '=', '<>')) \
+                and left_op and right_op \
+                and not type(left_op) == str and not type(right_op) == str:
+
+            cha = abs(sub_without_floating_point_issues(left_op, right_op))
+            if cha <= 0.00001:
+                left_op = max(left_op, right_op)
+                right_op = left_op
 
         left_list, right_list = list_like(left_op), list_like(right_op)
         if not left_list and left_op in ERROR_CODES:
